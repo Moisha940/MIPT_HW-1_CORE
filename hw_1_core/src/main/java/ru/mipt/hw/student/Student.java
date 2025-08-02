@@ -3,10 +3,12 @@ package ru.mipt.hw.student;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
-public class Student {
+public class Student <T> {
     private String name;
-    private final List<Integer> marks;
+    private final List<T> marks;
+    private final Predicate<T> condition;
 
     private void validateName(String name) {
         if (name == null || name.trim().isEmpty()) {
@@ -14,8 +16,11 @@ public class Student {
         }
     }
 
-    private void validateMark(Integer mark) {
-        if (mark == null || mark < 1 || mark > 5) {
+    private void validateMark(T mark) {
+        if (mark == null) {
+            throw new IllegalArgumentException("Оценка не может быть null");
+        }
+        if (condition != null && !condition.test(mark)) {
             throw new IllegalArgumentException("Неверная оценка");
         }
     }
@@ -23,14 +28,35 @@ public class Student {
     public Student(String name) {
         validateName(name);
         this.name = name;
-        this.marks = new ArrayList<>();
+        this.marks = new ArrayList<T>();
+        this.condition = null;
+    }
+
+    public Student(String name, Predicate<T> condition) {
+        validateName(name);
+        this.name = name;
+        this.marks = new ArrayList<T>();
+        this.condition = condition;
 
     }
 
-    public Student(String name, List<Integer> marks) {
+    public Student(String name, List<T> marks) {
         validateName(name);
         this.name = name;
-        this.marks = new ArrayList<>();
+        this.condition = null;
+        this.marks = new ArrayList<T>();
+        marks.forEach(mark -> {
+            validateMark(mark);
+            this.marks.add(mark);
+        });
+
+    }
+
+    public Student(String name, List<T> marks, Predicate<T> condition) {
+        validateName(name);
+        this.name = name;
+        this.condition = condition;
+        this.marks = new ArrayList<T>();
         marks.forEach(mark -> {
             validateMark(mark);
             this.marks.add(mark);
@@ -47,17 +73,19 @@ public class Student {
         this.name = name;
     }
 
-    public List<Integer> getMarks() {
+    public List<T> getMarks() {
         return Collections.unmodifiableList(this.marks);
     }
 
-    public void addMark(Integer mark) throws IllegalArgumentException {
+    public void addMark(T mark) throws IllegalArgumentException {
         validateMark(mark);
         this.marks.add(mark);
     }
 
-    public void deleteMark(Integer mark) {
-        validateMark(mark);
+    public void deleteMark(T mark) {
+        if (mark == null) {
+            return;
+        }
         this.marks.remove(mark);
     }
 
